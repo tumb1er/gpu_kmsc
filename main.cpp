@@ -6,7 +6,7 @@
 #include "utils/utils.h"
 
 static const float TOLERANCE = 0.01f;
-static const float YINYANG_T = 0; // .1f;
+static const float YINYANG_T = 0.1f;
 using namespace std;
 
 off_t fileSize(const char *filename) {
