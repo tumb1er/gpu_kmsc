@@ -14,9 +14,9 @@ set(SOURCE_FILES
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "../bin")
 
 cuda_add_executable(gpu_kmsc ${SOURCE_FILES})
-add_subdirectory(kmcuda)
+add_subdirectory(kmcuda/src)
 
-include_directories(kmcuda)
+include_directories(kmcuda/src)
 link_directories(lib)
 
 target_link_libraries(gpu_kmsc KMCUDA)
