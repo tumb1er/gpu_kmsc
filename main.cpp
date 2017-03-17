@@ -6,7 +6,7 @@
 #include "utils/utils.h"
 
 static const float TOLERANCE = 0.01f;
-static const float YINYANG_T = 0.1f;
+static const float YINYANG_T = 0; // .1f;
 using namespace std;
 
 off_t fileSize(const char *filename) {
@@ -43,9 +43,6 @@ int main(int argc, char **argv) {
     }
     float *centroids;
     cudacall(cudaMallocHost((void**) &centroids, args->clusters * args->factors * sizeof(float)));
-    size_t samples_count = min(elements, args->shard_size) / args->factors;
-
-    
     size_t file_offset = args->shard_size * args->factors * sizeof(float);
 
     for (size_t offset=0; offset < size; offset += file_offset) {
@@ -66,7 +63,7 @@ int main(int argc, char **argv) {
                 args->factors,
                 args->clusters,
                 123,  // random seed
-                0,  // device
+                1,  // device bit mask (0x1 means gpu #0)
                 -1, // device pointers mode (-1 - all data are host pointers)
                 0,  // fp16 mode
                 2,  // verbosity
