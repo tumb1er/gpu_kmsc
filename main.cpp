@@ -41,8 +41,8 @@ int main(int argc, char **argv) {
         cout << "samples file not matches factors" << endl;
         return -3;
     }
-    float *centroids;
-    cudacall(cudaMallocHost((void**) &centroids, args->clusters * args->factors * sizeof(float)));
+    float *gpu_centroids;
+    cudacall(cudaMalloc((void**) &gpu_centroids, args->clusters * args->factors * sizeof(float)));
     size_t file_offset = args->shard_size * args->factors * sizeof(float);
 
     for (size_t offset=0; offset < size; offset += file_offset) {
@@ -51,8 +51,9 @@ int main(int argc, char **argv) {
 
         unsigned int chunk_samples = (unsigned int) (chunk_size / (args->factors * sizeof(float)));
         float *samples = load_matrix(args->samples_file, offset, args->factors, chunk_samples);
-        unsigned int *assignments;
-        cudacall(cudaMallocHost((void **) &assignments, chunk_samples * sizeof(unsigned int)));
+        float *gpu_samples = upload_to_gpu(samples, args->factors * chunk_samples);
+        unsigned int *gpu_assignments;
+        cudacall(cudaMalloc((void **) &gpu_assignments, chunk_samples * sizeof(unsigned int)));
 
         cout << "Starting KMCUDA..." << endl;
         KMCUDAResult result = kmeans_cuda(
@@ -64,22 +65,30 @@ int main(int argc, char **argv) {
                 args->clusters,
                 123,  // random seed
                 1,  // device bit mask (0x1 means gpu #0)
-                -1, // device pointers mode (-1 - all data are host pointers)
+                0, // device pointers mode (-1 - all data are host pointers, 0 - device pointers at gpu #0)
                 0,  // fp16 mode
                 2,  // verbosity
-                samples, centroids, assignments, NULL  // data pointers
+                gpu_samples, gpu_centroids, gpu_assignments, NULL  // data pointers
         );
         if (result != KMCUDAResult::kmcudaSuccess) {
             cout << "KMCUDAResult: " << result << endl;
             return -4;
         }
         cout << "Saving centroids" << endl;
-        save_matrix("centroids.bin", centroids, args->factors, args->clusters, offset!=0);
+        float * centroids = download_from_gpu(gpu_centroids, args->factors * args->clusters);
+        save_matrix("gpu_centroids.bin", centroids, args->factors, args->clusters, offset!=0);
+        cout << "Saving assignments" << endl;
+        unsigned int* assignments = download_from_gpu(gpu_assignments, chunk_samples);
+        save_matrix("assignments.bin", assignments, 1, chunk_samples, offset!=0);
+
         cout << "Cleaning up..." << endl;
-        cudaFree(samples);
-        cudaFree(assignments);
+        cudaFreeHost(samples);
+        cudaFree(gpu_samples);
+        cudaFreeHost(assignments);
+        cudaFree(gpu_assignments);
+        cudaFreeHost(centroids);
     }
-    cudaFree(centroids);
+    cudaFree(gpu_centroids);
     cudacall(cudaDeviceReset());
     return 0;
 }

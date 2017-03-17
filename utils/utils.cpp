@@ -26,6 +26,14 @@ float* download_from_gpu(const float *gpu_pointer, int size) {
             cudaMemcpyDeviceToHost));
     return pointer;
 }
+unsigned int* download_from_gpu(const unsigned int *gpu_pointer, int size) {
+    unsigned int* pointer;
+    cudacall(cudaMallocHost((void** ) &pointer, size * sizeof(pointer[0])));
+    cudacall(cudaMemcpy(
+            pointer, gpu_pointer, (size_t) (size * sizeof(pointer[0])),
+            cudaMemcpyDeviceToHost));
+    return pointer;
+}
 
 float* load_matrix(const char *matrix_file, const size_t matrix_offset, const int width, const int height) {
     float* matrixHostPtr;
@@ -45,6 +53,13 @@ void save_matrix(const char *matrix_file, const float *host_ptr,
                  const int width, const int height, const bool append) {
     FILE * f = fopen(matrix_file, append?"ab":"wb");
     fwrite(host_ptr, sizeof(float), (size_t) (width * height), f);
+    fclose(f);
+}
+
+void save_matrix(const char *matrix_file, const unsigned int *host_ptr,
+                 const int width, const int height, const bool append) {
+    FILE * f = fopen(matrix_file, append?"ab":"wb");
+    fwrite(host_ptr, sizeof( unsigned int), (size_t) (width * height), f);
     fclose(f);
 }
 

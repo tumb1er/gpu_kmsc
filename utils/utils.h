@@ -34,6 +34,9 @@ float* load_matrix(const char *matrix_file, const size_t matrix_offset, const in
 void save_matrix(const char *matrix_file, const float *host_ptr,
                  const int width, const int height, const bool append);
 
+void save_matrix(const char *matrix_file, const unsigned int *host_ptr,
+                 const int width, const int height, const bool append);
+
 /// обертка для вывода ошибок от библиотеки CUDA
 #define cudacall(call) \
     do\
@@ -54,5 +57,7 @@ float * upload_to_gpu(const float *host_pointer, int size);
 
 /* аллоцирует память на хосте и выгружает данные с GPU */
 float * download_from_gpu(const float *gpu_pointer, int size);
+/* аллоцирует память на хосте и выгружает данные с GPU */
+unsigned int* download_from_gpu(const unsigned int *gpu_pointer, int size);
 
 #endif //GPU_KMSC_UTILS_H
