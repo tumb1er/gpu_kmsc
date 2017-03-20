@@ -77,7 +77,7 @@ int main(int argc, char **argv) {
         }
         cout << "Saving centroids..." << endl;
         float * centroids = download_from_gpu(gpu_centroids, args->factors * args->clusters);
-        save_matrix("gpu_centroids.bin", centroids, args->factors, args->clusters, offset!=0);
+        save_matrix("centroids.bin", centroids, args->factors, args->clusters, offset!=0);
         cout << "Saving assignments..." << endl;
         unsigned int* assignments = download_from_gpu(gpu_assignments, chunk_samples);
         // unique cluster indices for each shard

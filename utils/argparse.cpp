@@ -13,7 +13,7 @@ void print_usage(char *prog) {
     printf("Options:\n");
     printf("--factors <int>\tnumber of factors\n");
     printf("--clusters <int>\tnumber of cluster per shard\n");
-    printf("--shards <int>\tnumber of shards\n");
+    printf("--shard_size <int>\tshard size\n");
     exit(1);
 }
 
