@@ -44,6 +44,7 @@ int main(int argc, char **argv) {
     float *gpu_centroids;
     cudacall(cudaMalloc((void**) &gpu_centroids, args->clusters * args->factors * sizeof(float)));
     size_t file_offset = args->shard_size * args->factors * sizeof(float);
+    unsigned int assignment_offset = 0;
 
     for (size_t offset=0; offset < size; offset += file_offset) {
         // Размер текущего фрагмента матрицы в байтах
@@ -67,18 +68,24 @@ int main(int argc, char **argv) {
                 1,  // device bit mask (0x1 means gpu #0)
                 0, // device pointers mode (-1 - all data are host pointers, 0 - device pointers at gpu #0)
                 0,  // fp16 mode
-                2,  // verbosity
+                1,  // verbosity
                 gpu_samples, gpu_centroids, gpu_assignments, NULL  // data pointers
         );
         if (result != KMCUDAResult::kmcudaSuccess) {
             cout << "KMCUDAResult: " << result << endl;
             return -4;
         }
-        cout << "Saving centroids" << endl;
+        cout << "Saving centroids..." << endl;
         float * centroids = download_from_gpu(gpu_centroids, args->factors * args->clusters);
         save_matrix("gpu_centroids.bin", centroids, args->factors, args->clusters, offset!=0);
-        cout << "Saving assignments" << endl;
+        cout << "Saving assignments..." << endl;
         unsigned int* assignments = download_from_gpu(gpu_assignments, chunk_samples);
+        // unique cluster indices for each shard
+        if (assignment_offset) {
+            for (int i = 0; i < chunk_samples; i++) {
+                assignments[i] += assignment_offset;
+            }
+        }
         save_matrix("assignments.bin", assignments, 1, chunk_samples, offset!=0);
 
         cout << "Cleaning up..." << endl;
@@ -87,6 +94,7 @@ int main(int argc, char **argv) {
         cudaFreeHost(assignments);
         cudaFree(gpu_assignments);
         cudaFreeHost(centroids);
+        assignment_offset += args->clusters;
     }
     cudaFree(gpu_centroids);
     cudacall(cudaDeviceReset());
