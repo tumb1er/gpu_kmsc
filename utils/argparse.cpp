@@ -38,7 +38,7 @@ gpu_kmsc_args* parse_args(int argc, char **argv) {
                 {
                         {"factors",  required_argument, 0, 'f'},
                         {"clusters", required_argument, 0, 'c'},
-                        {"shards",   required_argument, 0, 's'},
+                        {"shard_size",   required_argument, 0, 's'},
                         {0, 0,                          0, 0}
                 };
         c = getopt_long(argc, argv, "f:c:s:",
