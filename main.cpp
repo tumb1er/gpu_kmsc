@@ -68,17 +68,18 @@ int main(int argc, char **argv) {
                 1,  // device bit mask (0x1 means gpu #0)
                 0, // device pointers mode (-1 - all data are host pointers, 0 - device pointers at gpu #0)
                 0,  // fp16 mode
-                1,  // verbosity
+                2,  // verbosity
                 gpu_samples, gpu_centroids, gpu_assignments, NULL  // data pointers
         );
         if (result != KMCUDAResult::kmcudaSuccess) {
             cout << "KMCUDAResult: " << result << endl;
             return -4;
         }
-        cout << "Saving centroids..." << endl;
+        cout << "Downloading centroids..." << endl;
         float * centroids = download_from_gpu(gpu_centroids, args->factors * args->clusters);
+        cout << "Saving centroids..." << endl;
         save_matrix("centroids.bin", centroids, args->factors, args->clusters, offset!=0);
-        cout << "Saving assignments..." << endl;
+        cout << "Downloading assignments..." << endl;
         unsigned int* assignments = download_from_gpu(gpu_assignments, chunk_samples);
         // unique cluster indices for each shard
         if (assignment_offset) {
@@ -86,6 +87,7 @@ int main(int argc, char **argv) {
                 assignments[i] += assignment_offset;
             }
         }
+        cout << "Saving assignments..." << endl;
         save_matrix("assignments.bin", assignments, 1, chunk_samples, offset!=0);
 
         cout << "Cleaning up..." << endl;
